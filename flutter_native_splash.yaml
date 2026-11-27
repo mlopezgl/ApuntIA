@@ -1,0 +1,13 @@
+# Splash de ApuntIA. Regenerar con: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#11132E"
+  image: assets/branding/splash_logo.png
+  android_12:
+    color: "#11132E"
+    image: assets/branding/splash_android12.png
+    icon_background_color: "#5B3FF5"
+  ios_content_mode: center
+  fullscreen: false
+  android: true
+  ios: true
+  web: false

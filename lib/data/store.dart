@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'storage_native.dart' if (dart.library.js_interop) 'storage_web.dart';
+import 'storage_native.dart';
 import '../domain/models.dart';
 
 abstract interface class StudyStorage {
@@ -101,6 +101,17 @@ class StudyStore extends ChangeNotifier {
   });
   String exportJson() =>
       const JsonEncoder.withIndent('  ').convert(data.toJson());
+
+  /// Sustituye todos los mazos y el historial (restauración o sincronización).
+  Future<void> replaceAll(StudyData next) => _commit((d) {
+    d.decks
+      ..clear()
+      ..addAll(next.decks);
+    d.events
+      ..clear()
+      ..addAll(next.events);
+  });
+
   Future<void> importJson(String raw) async {
     if (utf8.encode(raw).length > 5000000) {
       throw const FormatException('El respaldo supera 5 MB.');
@@ -108,13 +119,6 @@ class StudyStore extends ChangeNotifier {
     final imported = StudyData.fromJson(
       Map<String, dynamic>.from(jsonDecode(raw) as Map),
     );
-    await _commit((d) {
-      d.decks
-        ..clear()
-        ..addAll(imported.decks);
-      d.events
-        ..clear()
-        ..addAll(imported.events);
-    });
+    await replaceAll(imported);
   }
 }

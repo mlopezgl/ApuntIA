@@ -1,0 +1,23 @@
+name: Análisis y pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analizar-y-probar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+          cache: true
+      - name: Usar la plantilla de configuración (modo sin conexión)
+        run: cp lib/firebase_options.example.dart lib/firebase_options.dart
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: dart run tool/domain_check.dart

@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "AQUI_COLOCA_TU_PROJECT_NUMBER",
+    "project_id": "AQUI_COLOCA_TU_PROJECT_ID",
+    "storage_bucket": "AQUI_COLOCA_TU_STORAGE_BUCKET"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "AQUI_COLOCA_TU_APP_ID_DE_ANDROID",
+        "android_client_info": {
+          "package_name": "com.axiomanetwork.apuntia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "AQUI_COLOCA_TU_CLIENT_ID_TIPO_1",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.axiomanetwork.apuntia",
+            "certificate_hash": "AQUI_COLOCA_LA_SHA1_DE_TU_CLAVE_DE_FIRMA"
+          }
+        },
+        {
+          "client_id": "AQUI_COLOCA_TU_CLIENT_ID_TIPO_3",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AQUI_COLOCA_TU_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "AQUI_COLOCA_TU_CLIENT_ID_TIPO_3",
+              "client_type": 3
+            },
+            {
+              "client_id": "AQUI_COLOCA_TU_CLIENT_ID_TIPO_2",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "AQUI_COLOCA_TU_BUNDLE_ID_DE_IOS"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

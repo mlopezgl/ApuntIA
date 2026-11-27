@@ -98,13 +98,15 @@ class HomePage extends StatelessWidget {
             children: [
               Icon(Icons.wb_sunny_outlined, color: InkColors.purple),
               SizedBox(width: 8),
-              Text(
-                'TU REPASO DE HOY',
-                style: TextStyle(
-                  color: InkColors.purple,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                  letterSpacing: 1,
+              Flexible(
+                child: Text(
+                  'TU REPASO DE HOY',
+                  style: TextStyle(
+                    color: InkColors.purple,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    letterSpacing: 1,
+                  ),
                 ),
               ),
             ],
@@ -318,9 +320,11 @@ class _Metric extends StatelessWidget {
           style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
         ),
         const SizedBox(width: 8),
-        Text(
-          label,
-          style: const TextStyle(color: InkColors.muted, fontSize: 13),
+        Flexible(
+          child: Text(
+            label,
+            style: const TextStyle(color: InkColors.muted, fontSize: 13),
+          ),
         ),
       ],
     ),

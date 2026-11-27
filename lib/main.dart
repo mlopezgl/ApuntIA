@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'app.dart';
 import 'data/store.dart';
+import 'services/app_services.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(ApuntiaApp(store: StudyStore(DeviceStorage())));
+  final store = StudyStore(DeviceStorage());
+  final services = await AppServices.initialize(store);
+  runApp(ApuntiaApp(store: store, services: services));
 }

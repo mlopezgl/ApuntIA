@@ -9,8 +9,14 @@ import 'theme.dart';
 import 'widgets.dart';
 
 class CapturePage extends StatefulWidget {
-  const CapturePage({super.key, required this.store, this.initialText});
+  const CapturePage({
+    super.key,
+    required this.store,
+    required this.generator,
+    this.initialText,
+  });
   final StudyStore store;
+  final CardGenerator generator;
   final String? initialText;
   @override
   State<CapturePage> createState() => _CapturePageState();
@@ -20,10 +26,9 @@ class _CapturePageState extends State<CapturePage> {
   final form = GlobalKey<FormState>();
   final title = TextEditingController();
   final subject = TextEditingController();
-  final accessToken = TextEditingController();
   late final text = TextEditingController(text: widget.initialText);
   final scanner = NoteScanner();
-  final generator = CardGenerator();
+  late final generator = widget.generator;
   bool busy = false, useAi = false, consent = false;
   String status = '';
   List<CardDraft>? drafts;
@@ -32,7 +37,6 @@ class _CapturePageState extends State<CapturePage> {
     title.dispose();
     subject.dispose();
     text.dispose();
-    accessToken.dispose();
     super.dispose();
   }
 
@@ -69,26 +73,13 @@ class _CapturePageState extends State<CapturePage> {
       );
       return;
     }
-    if (useAi && accessToken.text.trim().length < 24) {
-      showError(
-        context,
-        const FormatException(
-          'Escribe el código de acceso que te proporcionó el administrador de la app.',
-        ),
-      );
-      return;
-    }
     setState(() {
       busy = true;
       status = useAi ? 'Creando preguntas con IA…' : 'Preparando tus tarjetas…';
     });
     try {
       final result = useAi
-          ? await generator.ai(
-              text.text.trim(),
-              subject.text.trim(),
-              accessToken: accessToken.text.trim(),
-            )
+          ? await generator.ai(text.text.trim(), subject.text.trim())
           : generator.local(text.text.trim());
       if (result.isEmpty) {
         throw const FormatException(
@@ -125,7 +116,7 @@ class _CapturePageState extends State<CapturePage> {
       subject: subject.text.trim(),
       created: now,
       source: text.text.trim(),
-      origin: useAi ? 'IA' : 'Plantillas locales',
+      origin: useAi ? 'IA (Gemini)' : 'Plantillas locales',
       cards: drafts!.map((d) => d.toCard(now)).toList(),
     );
     try {
@@ -152,49 +143,55 @@ class _CapturePageState extends State<CapturePage> {
       appBar: AppBar(
         title: Text(drafts == null ? 'Nueva captura' : 'Revisa tus tarjetas'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(22),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 740),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
-                  children: [
-                    Tag(
-                      '1 · Tus apuntes',
-                      background: drafts == null
-                          ? InkColors.lavender
-                          : InkColors.line,
-                    ),
-                    Tag(
-                      '2 · Tus tarjetas',
-                      background: drafts != null
-                          ? InkColors.lavender
-                          : InkColors.line,
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(22),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 740),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    children: [
+                      Tag(
+                        '1 · Tus apuntes',
+                        background: drafts == null
+                            ? InkColors.lavender
+                            : InkColors.line,
+                      ),
+                      Tag(
+                        '2 · Tus tarjetas',
+                        background: drafts != null
+                            ? InkColors.lavender
+                            : InkColors.line,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 26),
+                  if (drafts == null)
+                    ...sourceForm(context)
+                  else
+                    ...preview(context),
+                  if (busy) ...[
+                    const SizedBox(height: 22),
+                    const LinearProgressIndicator(),
+                    const SizedBox(height: 10),
+                    Text(
+                      status,
+                      style: const TextStyle(color: InkColors.purple),
                     ),
                   ],
-                ),
-                const SizedBox(height: 26),
-                if (drafts == null)
-                  ...sourceForm(context)
-                else
-                  ...preview(context),
-                if (busy) ...[
-                  const SizedBox(height: 22),
-                  const LinearProgressIndicator(),
-                  const SizedBox(height: 10),
-                  Text(status, style: const TextStyle(color: InkColors.purple)),
+                  const SizedBox(height: 24),
+                  const InfoNote(
+                    'La foto no se envía ni se añade al mazo. Solo guardamos el texto y las tarjetas en este dispositivo.',
+                  ),
+                  const SizedBox(height: 24),
                 ],
-                const SizedBox(height: 24),
-                const InfoNote(
-                  'La foto no se envía ni se añade al mazo. Solo guardamos el texto y las tarjetas en este dispositivo.',
-                ),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
           ),
         ),
@@ -256,7 +253,7 @@ class _CapturePageState extends State<CapturePage> {
           if (!scanner.supported) ...[
             const SizedBox(height: 14),
             const Text(
-              'En la vista web, escribe o pega el texto. La cámara y el OCR están disponibles en Android y iOS.',
+              'La cámara no está disponible en este dispositivo. Escribe o pega el texto de tus apuntes.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: InkColors.muted),
             ),
@@ -322,7 +319,7 @@ class _CapturePageState extends State<CapturePage> {
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
             value: useAi,
-            onChanged: busy || !CardGenerator.aiAvailable
+            onChanged: busy || !generator.aiAvailable
                 ? null
                 : (v) => setState(() {
                     useAi = v;
@@ -333,24 +330,12 @@ class _CapturePageState extends State<CapturePage> {
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
             subtitle: Text(
-              CardGenerator.aiAvailable
-                  ? 'Preguntas sobre las ideas clave de tu texto.'
-                  : 'Disponible cuando se configure el servicio de IA.',
+              generator.aiAvailable
+                  ? 'Gemini crea preguntas sobre las ideas clave de tu texto.'
+                  : 'Disponible en Android e iOS con conexión a internet.',
             ),
           ),
           if (useAi) ...[
-            TextField(
-              controller: accessToken,
-              enabled: !busy,
-              obscureText: true,
-              autocorrect: false,
-              enableSuggestions: false,
-              decoration: const InputDecoration(
-                labelText: 'Código de acceso a IA',
-                helperText: 'Se usa en esta captura y no se guarda.',
-              ),
-            ),
-            const SizedBox(height: 12),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: consent,
@@ -359,7 +344,7 @@ class _CapturePageState extends State<CapturePage> {
                   : (v) => setState(() => consent = v ?? false),
               controlAffinity: ListTileControlAffinity.leading,
               title: const Text(
-                'Autorizo enviar este texto y la materia al servicio de IA (OpenAI). Mi foto no se enviará.',
+                'Autorizo enviar este texto y la materia a Gemini (Google) mediante Firebase. Mi foto no se enviará.',
                 style: TextStyle(fontSize: 13),
               ),
             ),

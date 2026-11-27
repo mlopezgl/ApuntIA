@@ -258,3 +258,58 @@ class StudyData {
     events: [],
   );
 }
+
+/// Une dos copias de los datos de estudio (este dispositivo y la nube) sin
+/// perder información:
+/// - Mazos y tarjetas se combinan por `id`.
+/// - Si una tarjeta existe en ambos lados gana la que tiene la próxima revisión
+///   (`due`) más tardía, porque solo se puede repasar una tarjeta vencida y cada
+///   repaso mueve `due` hacia adelante. En empate gana la copia local.
+/// - El historial de repasos es la unión de ambos historiales.
+///
+/// Limitación conocida: un mazo eliminado en un dispositivo reaparece si el
+/// otro dispositivo todavía lo tiene; se puede volver a eliminar.
+StudyData mergeStudyData(StudyData local, StudyData remote) {
+  final decks = <String, Deck>{for (final d in remote.decks) d.id: d};
+  for (final deck in local.decks) {
+    final other = decks[deck.id];
+    if (other == null) {
+      decks[deck.id] = deck;
+      continue;
+    }
+    final cards = <String, StudyCard>{for (final c in other.cards) c.id: c};
+    for (final card in deck.cards) {
+      final theirs = cards[card.id];
+      cards[card.id] = theirs == null || !theirs.due.isAfter(card.due)
+          ? card
+          : theirs;
+    }
+    decks[deck.id] = Deck(
+      id: deck.id,
+      title: deck.title,
+      subject: deck.subject,
+      created: deck.created,
+      source: deck.source,
+      origin: deck.origin,
+      cards: cards.values.take(100).toList(),
+    );
+  }
+  final events = <String, ReviewEvent>{};
+  for (final e in [...remote.events, ...local.events]) {
+    events['${e.cardId}|${e.when.toUtc().toIso8601String()}|${e.easy}'] = e;
+  }
+  final mergedEvents = events.values.toList()
+    ..sort((a, b) => a.when.compareTo(b.when));
+  final mergedDecks = decks.values.toList()
+    ..sort((a, b) => b.created.compareTo(a.created));
+  return StudyData(
+    decks: mergedDecks.take(200).toList(),
+    events: mergedEvents.length > 50000
+        ? mergedEvents.sublist(mergedEvents.length - 50000)
+        : mergedEvents,
+  );
+}
+
+/// `true` si los datos solo contienen el mazo de ejemplo y ningún repaso.
+bool isPristine(StudyData data) =>
+    data.events.isEmpty && data.decks.every((d) => d.id == 'example-deck');

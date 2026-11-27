@@ -2,18 +2,22 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'data/store.dart';
+import 'services/app_services.dart';
 import 'services/ocr.dart';
 import 'ui/capture_page.dart';
 import 'ui/home_page.dart';
 import 'ui/library_page.dart';
+import 'ui/login_page.dart';
 import 'ui/progress_page.dart';
 import 'ui/settings_page.dart';
 import 'ui/theme.dart';
 import 'ui/widgets.dart';
 
 class ApuntiaApp extends StatelessWidget {
-  const ApuntiaApp({super.key, required this.store});
+  ApuntiaApp({super.key, required this.store, AppServices? services})
+    : services = services ?? AppServices.offline();
   final StudyStore store;
+  final AppServices services;
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'ApuntIA',
@@ -22,13 +26,14 @@ class ApuntiaApp extends StatelessWidget {
     locale: const Locale('es', 'MX'),
     supportedLocales: const [Locale('es', 'MX')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
-    home: _Bootstrap(store: store),
+    home: _Bootstrap(store: store, services: services),
   );
 }
 
 class _Bootstrap extends StatefulWidget {
-  const _Bootstrap({required this.store});
+  const _Bootstrap({required this.store, required this.services});
   final StudyStore store;
+  final AppServices services;
   @override
   State<_Bootstrap> createState() => _BootstrapState();
 }
@@ -54,18 +59,20 @@ class _BootstrapState extends State<_Bootstrap> {
   Widget build(BuildContext context) {
     if (error != null) {
       return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: EmptyMessage(
-                title: 'No pudimos abrir tus apuntes',
-                message:
-                    'Tus datos no se han reemplazado. Intenta abrirlos de nuevo. Si el problema continúa, conserva los datos de la app para recuperarlos.',
-                action: FilledButton(
-                  onPressed: load,
-                  child: const Text('Reintentar'),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: EmptyMessage(
+                  title: 'No pudimos abrir tus apuntes',
+                  message:
+                      'Tus datos no se han reemplazado. Intenta abrirlos de nuevo. Si el problema continúa, conserva los datos de la app para recuperarlos.',
+                  action: FilledButton(
+                    onPressed: load,
+                    child: const Text('Reintentar'),
+                  ),
                 ),
               ),
             ),
@@ -76,13 +83,25 @@ class _BootstrapState extends State<_Bootstrap> {
     if (!widget.store.loaded) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return AppShell(store: widget.store);
+    final cloud = widget.services.cloud;
+    if (cloud == null) {
+      return AppShell(store: widget.store, services: widget.services);
+    }
+    // Pantalla de acceso al abrir la app, salvo que haya sesión o que la
+    // persona haya elegido "Continuar sin cuenta".
+    return ListenableBuilder(
+      listenable: cloud,
+      builder: (context, _) => cloud.signedIn || cloud.loginSkipped
+          ? AppShell(store: widget.store, services: widget.services)
+          : LoginPage(cloud: cloud, onSkip: cloud.skipLogin),
+    );
   }
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.store});
+  const AppShell({super.key, required this.store, required this.services});
   final StudyStore store;
+  final AppServices services;
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -124,8 +143,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void capture({String? initialText}) => Navigator.push(
     context,
     MaterialPageRoute<void>(
-      builder: (_) =>
-          CapturePage(store: widget.store, initialText: initialText),
+      builder: (_) => CapturePage(
+        store: widget.store,
+        generator: widget.services.generator,
+        initialText: initialText,
+      ),
     ),
   );
   @override
@@ -170,7 +192,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute<void>(
-                  builder: (_) => SettingsPage(store: widget.store),
+                  builder: (_) => SettingsPage(
+                    store: widget.store,
+                    services: widget.services,
+                  ),
                 ),
               ),
               icon: const Icon(Icons.tune_rounded),
@@ -178,35 +203,39 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             const SizedBox(width: 16),
           ],
         ),
-        body: wide
-            ? Row(
-                children: [
-                  NavigationRail(
-                    selectedIndex: selected,
-                    onDestinationSelected: (v) => setState(() => selected = v),
-                    labelType: NavigationRailLabelType.all,
-                    backgroundColor: InkColors.paper,
-                    indicatorColor: InkColors.lavender,
-                    destinations: const [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.grid_view_rounded),
-                        label: Text('Inicio'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.style_outlined),
-                        label: Text('Mis apuntes'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.bar_chart_rounded),
-                        label: Text('Progreso'),
-                      ),
-                    ],
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: content),
-                ],
-              )
-            : content,
+        body: SafeArea(
+          top: false,
+          child: wide
+              ? Row(
+                  children: [
+                    NavigationRail(
+                      selectedIndex: selected,
+                      onDestinationSelected: (v) =>
+                          setState(() => selected = v),
+                      labelType: NavigationRailLabelType.all,
+                      backgroundColor: InkColors.paper,
+                      indicatorColor: InkColors.lavender,
+                      destinations: const [
+                        NavigationRailDestination(
+                          icon: Icon(Icons.grid_view_rounded),
+                          label: Text('Inicio'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.style_outlined),
+                          label: Text('Mis apuntes'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.bar_chart_rounded),
+                          label: Text('Progreso'),
+                        ),
+                      ],
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: content),
+                  ],
+                )
+              : content,
+        ),
         bottomNavigationBar: wide
             ? null
             : NavigationBar(

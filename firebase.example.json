@@ -1,0 +1,34 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "AQUI_COLOCA_TU_PROJECT_ID",
+          "appId": "AQUI_COLOCA_TU_APP_ID_DE_ANDROID",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "AQUI_COLOCA_TU_PROJECT_ID",
+          "appId": "AQUI_COLOCA_TU_APP_ID_DE_IOS",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "AQUI_COLOCA_TU_PROJECT_ID",
+          "configurations": {
+            "android": "AQUI_COLOCA_TU_APP_ID_DE_ANDROID",
+            "ios": "AQUI_COLOCA_TU_APP_ID_DE_IOS"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

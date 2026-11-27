@@ -2,8 +2,6 @@
 // dart run tool/domain_check.dart
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 import 'package:apuntia/domain/models.dart';
 import 'package:apuntia/services/generator.dart';
 
@@ -76,67 +74,55 @@ Future<void> main() async {
     'Draft cap',
   );
   check(generator.local('hola').isEmpty, 'Reject insufficient notes');
-  var requests = 0;
-  final client = MockClient((request) async {
-    requests++;
-    final body = jsonDecode(request.body) as Map<String, dynamic>;
-    check(
-      body['consent'] == true && !body.containsKey('photo'),
-      'Text-only authorized request',
-    );
-    check(
-      request.headers['Authorization'] == 'Bearer test-access-token',
-      'Runtime access token',
-    );
-    return http.Response(
-      jsonEncode({
+  var calls = 0;
+  final remote = CardGenerator(
+    engine: (text, subject) async {
+      calls++;
+      check(text.startsWith('Modelo') && subject == 'Software', 'Engine input');
+      return jsonEncode({
         'cards': [
           {'question': '¿Qué es un modelo?', 'answer': 'Representa datos.'},
         ],
-      }),
-      200,
-      headers: {'content-type': 'application/json; charset=utf-8'},
-    );
-  });
-  final remote = CardGenerator(apiEndpoint: 'https://example.test/cards');
-  final generated = await remote.ai(
-    'Modelo: representa datos.',
-    'Software',
-    accessToken: 'test-access-token',
-    client: client,
+      });
+    },
   );
+  final generated = await remote.ai('Modelo: representa datos.', 'Software');
   check(
-    requests == 1 && generated.single.question == '¿Qué es un modelo?',
+    calls == 1 && generated.single.question == '¿Qué es un modelo?',
     'AI response parsing',
   );
-  var insecureRejected = false;
+  var offlineRejected = false;
+  try {
+    await CardGenerator().ai('notes', 'subject');
+  } on FormatException {
+    offlineRejected = true;
+  }
+  check(offlineRejected, 'Reject AI when no engine is configured');
+  var invalidRejected = false;
+  try {
+    await CardGenerator(engine: (_, _) async => '{"cards":[]}').ai('n', 's');
+  } on FormatException {
+    invalidRejected = true;
+  }
+  check(invalidRejected, 'Reject empty AI response');
+  var failureHandled = false;
   try {
     await CardGenerator(
-      apiEndpoint: 'http://example.test/cards',
-    ).ai('notes', 'subject', accessToken: 'token', client: client);
+      engine: (_, _) async => throw StateError('offline'),
+    ).ai('n', 's');
   } on FormatException {
-    insecureRejected = true;
+    failureHandled = true;
   }
+  check(failureHandled, 'Handle AI transport failure');
+  final local = StudyData.example(DateTime(2026, 11, 19, 10));
+  final remoteData = StudyData.fromJson(local.toJson());
+  final merged = mergeStudyData(local, remoteData);
   check(
-    insecureRejected && requests == 1,
-    'Reject insecure endpoint before sending',
+    merged.decks.length == local.decks.length &&
+        merged.events.length == local.events.length,
+    'Merge is idempotent',
   );
-  var unauthorizedRejected = false;
-  final unauthorized = MockClient((_) async => http.Response('{}', 401));
-  try {
-    await remote.ai(
-      'notes',
-      'subject',
-      accessToken: 'wrong',
-      client: unauthorized,
-    );
-  } on FormatException {
-    unauthorizedRejected = true;
-  }
-  check(unauthorizedRejected, 'Handle rejected access code');
-  client.close();
-  unauthorized.close();
   stdout.writeln(
-    'Domain checks passed: scheduling, due dates, reports, streak, JSON, local drafts, AI transport validation.',
+    'Domain checks passed: scheduling, due dates, reports, streak, JSON, local drafts, AI response validation, cloud merge.',
   );
 }

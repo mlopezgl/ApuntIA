@@ -1,0 +1,53 @@
+# Sistema / editores
+.DS_Store
+*.swp
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/launch.json
+.history/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+**/doc/api/
+
+# Symbolication / ofuscación
+app.*.symbols
+app.*.map.json
+
+# Android (complementa android/.gitignore)
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/.kotlin/
+
+# Servidor opcional
+/server/node_modules/
+/server/.env
+
+# Restos de extensiones del IDE
+/.github/modernize/
+
+# Token de depuración de App Check (secreto local)
+/config/*.json
+!/config/dev.example.json
+/dist/
+
+# Configuración privada de Firebase / Apple (cada quien usa la suya).
+# Plantillas versionadas: *.example.* — ver README.
+/lib/firebase_options.dart
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/ios/Flutter/Secrets.xcconfig
+/firebase.json
+/.firebaserc
+# Notas privadas locales
+/privado/

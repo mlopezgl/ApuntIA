@@ -8,35 +8,36 @@ class Brand extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: InkColors.purple,
-          borderRadius: BorderRadius.circular(13),
-        ),
-        child: const Icon(
-          Icons.note_alt_outlined,
-          color: Colors.white,
-          size: 23,
+      ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/branding/icon.png',
+          width: 40,
+          height: 40,
+          semanticLabel: 'Logotipo de ApuntIA',
         ),
       ),
       const SizedBox(width: 10),
-      const Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(text: 'Apunt'),
-            TextSpan(
-              text: 'IA',
-              style: TextStyle(color: InkColors.orange),
-            ),
-          ],
-        ),
-        style: TextStyle(
-          color: InkColors.navy,
-          fontSize: 26,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -.8,
+      const Flexible(
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: 'Apunt'),
+              TextSpan(
+                text: 'IA',
+                style: TextStyle(color: InkColors.orange),
+              ),
+            ],
+          ),
+          style: TextStyle(
+            color: InkColors.navy,
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -.8,
+          ),
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.fade,
         ),
       ),
     ],
@@ -61,7 +62,9 @@ class Panel extends StatelessWidget {
       borderRadius: BorderRadius.circular(26),
       border: Border.all(color: InkColors.line),
     ),
-    child: child,
+    // Material transparente: los ListTile (interruptores, casillas) dibujan
+    // su fondo y efecto de toque sobre el panel y no detrás de él.
+    child: Material(type: MaterialType.transparency, child: child),
   );
 }
 

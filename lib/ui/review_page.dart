@@ -103,155 +103,160 @@ class _ReviewPageState extends State<ReviewPage> with WidgetsBindingObserver {
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(22),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 700),
-              child: finished
-                  ? _summary(context)
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Tarjeta ${index + 1} de ${widget.cards.length}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Text(
-                              '$index completadas',
-                              style: const TextStyle(
-                                color: InkColors.muted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: LinearProgressIndicator(
-                            value: index / widget.cards.length,
-                            minHeight: 8,
-                            backgroundColor: InkColors.line,
-                            color: InkColors.purple,
-                          ),
-                        ),
-                        const SizedBox(height: 26),
-                        Semantics(
-                          button: !revealed,
-                          label: revealed ? 'Respuesta' : 'Mostrar respuesta',
-                          child: Material(
-                            color: InkColors.lavender,
-                            borderRadius: BorderRadius.circular(28),
-                            child: InkWell(
-                              onTap: revealed
-                                  ? null
-                                  : () => setState(() => revealed = true),
-                              borderRadius: BorderRadius.circular(28),
-                              child: Container(
-                                width: double.infinity,
-                                constraints: const BoxConstraints(
-                                  minHeight: 370,
-                                ),
-                                padding: const EdgeInsets.all(30),
-                                child: AnimatedSize(
-                                  duration: const Duration(milliseconds: 180),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Tag(
-                                        revealed ? 'RESPUESTA' : 'PREGUNTA',
-                                        background: Colors.white.withValues(
-                                          alpha: .65,
-                                        ),
-                                        icon: revealed
-                                            ? Icons.lightbulb_outline
-                                            : Icons.psychology_outlined,
-                                      ),
-                                      const SizedBox(height: 28),
-                                      Text(
-                                        widget.cards[index].question,
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.headlineMedium,
-                                      ),
-                                      const SizedBox(height: 24),
-                                      if (revealed) ...[
-                                        const Divider(),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          widget.cards[index].answer,
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            height: 1.6,
-                                          ),
-                                        ),
-                                      ] else
-                                        const Text(
-                                          'Piensa en la respuesta.\nDespués, toca la tarjeta para comprobarla.',
-                                          style: TextStyle(
-                                            color: InkColors.muted,
-                                            height: 1.6,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        if (!revealed)
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: () => setState(() => revealed = true),
-                              child: const Text('Ver respuesta'),
-                            ),
-                          )
-                        else
+        body: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(22),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: finished
+                    ? _summary(context)
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: FilledButton.icon(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFFE3D7),
-                                    foregroundColor: const Color(0xFFA13C17),
-                                  ),
-                                  onPressed: busy ? null : () => rate(false),
-                                  icon: const Icon(Icons.replay_rounded),
-                                  label: const Text('Difícil'),
+                              Text(
+                                'Tarjeta ${index + 1} de ${widget.cards.length}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: FilledButton.icon(
-                                  onPressed: busy ? null : () => rate(true),
-                                  icon: const Icon(Icons.check_rounded),
-                                  label: const Text('Fácil'),
+                              Text(
+                                '$index completadas',
+                                style: const TextStyle(
+                                  color: InkColors.muted,
+                                  fontSize: 12,
                                 ),
                               ),
                             ],
                           ),
-                        const SizedBox(height: 18),
-                        const InfoNote(
-                          'Difícil: otro repaso en 10 minutos. Fácil: ampliamos el intervalo. Puedes salir cuando quieras; cada valoración se guarda.',
-                          icon: Icons.schedule_outlined,
-                        ),
-                        if (busy) ...[
-                          const SizedBox(height: 16),
-                          const LinearProgressIndicator(),
+                          const SizedBox(height: 14),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: LinearProgressIndicator(
+                              value: index / widget.cards.length,
+                              minHeight: 8,
+                              backgroundColor: InkColors.line,
+                              color: InkColors.purple,
+                            ),
+                          ),
+                          const SizedBox(height: 26),
+                          Semantics(
+                            button: !revealed,
+                            label: revealed ? 'Respuesta' : 'Mostrar respuesta',
+                            child: Material(
+                              color: InkColors.lavender,
+                              borderRadius: BorderRadius.circular(28),
+                              child: InkWell(
+                                onTap: revealed
+                                    ? null
+                                    : () => setState(() => revealed = true),
+                                borderRadius: BorderRadius.circular(28),
+                                child: Container(
+                                  width: double.infinity,
+                                  constraints: const BoxConstraints(
+                                    minHeight: 370,
+                                  ),
+                                  padding: const EdgeInsets.all(30),
+                                  child: AnimatedSize(
+                                    duration: const Duration(milliseconds: 180),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Tag(
+                                          revealed ? 'RESPUESTA' : 'PREGUNTA',
+                                          background: Colors.white.withValues(
+                                            alpha: .65,
+                                          ),
+                                          icon: revealed
+                                              ? Icons.lightbulb_outline
+                                              : Icons.psychology_outlined,
+                                        ),
+                                        const SizedBox(height: 28),
+                                        Text(
+                                          widget.cards[index].question,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.headlineMedium,
+                                        ),
+                                        const SizedBox(height: 24),
+                                        if (revealed) ...[
+                                          const Divider(),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            widget.cards[index].answer,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              height: 1.6,
+                                            ),
+                                          ),
+                                        ] else
+                                          const Text(
+                                            'Piensa en la respuesta.\nDespués, toca la tarjeta para comprobarla.',
+                                            style: TextStyle(
+                                              color: InkColors.muted,
+                                              height: 1.6,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          if (!revealed)
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () =>
+                                    setState(() => revealed = true),
+                                child: const Text('Ver respuesta'),
+                              ),
+                            )
+                          else
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: FilledButton.icon(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: const Color(0xFFFFE3D7),
+                                      foregroundColor: const Color(0xFFA13C17),
+                                    ),
+                                    onPressed: busy ? null : () => rate(false),
+                                    icon: const Icon(Icons.replay_rounded),
+                                    label: const Text('Difícil'),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: FilledButton.icon(
+                                    onPressed: busy ? null : () => rate(true),
+                                    icon: const Icon(Icons.check_rounded),
+                                    label: const Text('Fácil'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 18),
+                          const InfoNote(
+                            'Difícil: otro repaso en 10 minutos. Fácil: ampliamos el intervalo. Puedes salir cuando quieras; cada valoración se guarda.',
+                            icon: Icons.schedule_outlined,
+                          ),
+                          if (busy) ...[
+                            const SizedBox(height: 16),
+                            const LinearProgressIndicator(),
+                          ],
                         ],
-                      ],
-                    ),
+                      ),
+              ),
             ),
           ),
         ),
